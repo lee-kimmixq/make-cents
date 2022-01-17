@@ -1,0 +1,33 @@
+<%- include('header', {title: "Add New Transaction"}); -%>
+<div class="container">
+<h1>Add New Transaction</h1>
+
+<form action="/new" method="POST" class="row g-3">
+  
+  <div class="form-floating">
+    <select class="form-select" name="category" id="category">
+      <% categories.forEach((cat) => {%>
+        <option value="<%=cat%>"><%=cat%></option>
+      <%})%>
+      <option value="new">New Category</option>
+    </select>
+    <label for="category">Category</label>
+  </div>
+
+  <input type="date" class="form-control" max="<%=date%>" name="date" id="date">
+
+  <div class="form-floating">
+    <input type="text" class="form-control" name="name" id="name">
+    <label for="name">Description</label>
+  </div>
+  
+  <div class="input-group">
+    <span class="input-group-text">$</span>
+    <input type="number" step="0.01" class="form-control" name="amount" id="amount">
+  </div>
+
+  <input class="btn btn-primary" type="submit" value="Submit" />
+
+</form>
+  
+<%- include('footer'); -%>

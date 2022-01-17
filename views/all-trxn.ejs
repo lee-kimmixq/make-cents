@@ -1,0 +1,40 @@
+<%- include('header', {title: "All Transactions"}); -%>
+
+<h1>All Transactions</h1>
+
+<table class="table table-hover table-borderless">
+  <thead>
+    <tr>
+      <th scope="col">Date</th>
+      <th scope="col">Name</th>
+      <th scope="col">Amount</th>
+      <th scope="col">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <%trxn.forEach((item) => { %>
+
+        <tr>
+          <td><%=item.date%></td>
+          <td>
+            <%=item.exp_name%>
+            <span class="badge bg-secondary"><%=item.category%></span>
+          </td>
+          <td><%=item.exp_amount%></td>
+          <td>
+            <a class="btn btn-primary btn-sm" href="/trxn/<%=item.id%>">View</a>
+            <a class="btn btn-primary btn-sm" type="button" href="/trxn/<%=item.id%>/edit">Edit</a>
+            <form action="?_method=DELETE" method="POST">
+              <input type="submit" class="btn btn-danger btn-sm" value="Delete" />
+            </form>
+          </td>
+        </tr>
+    <%})%>
+  </tbody>
+</table>
+
+<div class="d-grid gap-2">
+  <a class="btn btn-secondary" type="button" href="/dashboard">Back to Dashboard</a>
+</div>
+
+<%- include('footer'); -%>
