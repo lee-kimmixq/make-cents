@@ -1,9 +1,45 @@
 <%- include('header', {title: "Home"}); -%>
 
-  <form action="/login" method="POST">
-    <input type="text" name="username" />
-    <input type="password" name="password" />
-    <input type="submit" value="Submit">
-  </form> 
+<div class="container col-xl-10 col-xxl-8 px-4 py-5">
+  <div class="row align-items-center g-lg-5 py-5">
+    <div class="col-lg-7 text-center text-lg-start">
+      <h1 class="display-2 fw-bold lh-1 mb-3"><s>Make Sense.</s><br></h1>
+      <h1 class="display-2 fw-bold lh-1 mb-3 text-primary">Make Cents.</h1>
+      <p class="col-lg-10 fs-4">Groundbreaking Expense Tracker App</p>
+      <p class="col-lg-10 fs-5 text-muted"><i>ka-ching</i></p>
+    </div>
+    <div class="col-md-10 mx-auto col-lg-5">
+      <form action="/login" method="POST" class="p-4 p-md-5 border rounded-3 bg-light">
+        <%if (login) {%>
+          <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+            <symbol id="exclamation-triangle-fill" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+            </symbol>
+          </svg>
+          <%if (login === 'fail') {%>
+            <div class="alert alert-danger d-flex align-items-center" role="alert">
+              <svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img" aria-label="Danger:"><use xlink:href="#exclamation-triangle-fill"/></svg>
+              <div>
+                Please check your username and password!
+              </div>
+            </div>
+          <%}%> 
+        <%}%>
+        <div class="form-floating mb-3">
+          <input type="text" class="form-control" id="username" name="username" placeholder="Username" required>
+          <label for="username">Username</label>
+        </div>
+        <div class="form-floating mb-3">
+          <input type="password" class="form-control" id="password" name="password" placeholder="Password" required>
+          <label for="password">Password</label>
+        </div>
+        <input class="w-100 btn btn-lg btn-primary" type="submit" value="Log In"></input>
+        <p class="text-muted text-center" style="margin-top:6%"><small> Not making cents yet? <a href="/">Sign up</a></small></p>
+        <hr class="my-4">
+        <small class="text-muted">By clicking Sign up, you agree to the terms of use.</small>
+      </form>
+    </div>
+  </div>
+</div>
   
 <%- include('footer'); -%>

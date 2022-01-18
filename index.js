@@ -22,6 +22,8 @@ const pgConnectionConfigs = {
 
 const pool = new Pool(pgConnectionConfigs);
 
+// ==================== MIDDLEWARE ====================
+
 const checkAuth = (req, res, next) => {
   req.isLoggedIn = false;
   if (req.cookies.loggedIn && req.cookies.userId) {
@@ -35,24 +37,44 @@ const checkAuth = (req, res, next) => {
   next();
 };
 
-app.get('/', (req, res) => {
-  res.render('home');
-});
+// ==================== LOGIN & SIGNUPS ====================
 
-app.get('/signup', (req, res) => {
-  res.render('signup');
+app.get('/', checkAuth, (req, res) => {
+  if (req.isLoggedIn === true) {
+    res.redirect('/dashboard');
+    return;
+  }
+  const { signup } = req.query;
+  res.render('home', { signup });
 });
 
 app.post('/signup', (req, res) => {
-  const hashedPw = getHash(req.body.password);
-  const values = [req.body.username, hashedPw];
-  pool.query('INSERT INTO users (username, password) VALUES ($1, $2)', values, () => {
-    res.send('signed up!');
-  });
+  pool
+    .query('SELECT * FROM users WHERE username=$1', [req.body.username])
+    .then((result) => {
+      if (result.rows.length > 0) {
+        res.redirect('/?signup=fail');
+        return;
+      }
+      const hashedPw = getHash(req.body.password);
+      const values = [req.body.username, hashedPw];
+      pool.query('INSERT INTO users (username, password) VALUES ($1, $2)', values, () => {
+        res.redirect('/dashboard');
+      });
+    })
+    .catch((err) => {
+      console.log('Error executing query', err.stack);
+      res.status(503).send('error');
+    });
 });
 
-app.get('/login', (req, res) => {
-  res.render('login');
+app.get('/login', checkAuth, (req, res) => {
+  if (req.isLoggedIn === true) {
+    res.redirect('/dashboard');
+    return;
+  }
+  const { login } = req.query;
+  res.render('login', { login });
 });
 
 app.post('/login', (req, res) => {
@@ -61,7 +83,7 @@ app.post('/login', (req, res) => {
     .query('SELECT * FROM users WHERE username=$1', values)
     .then((result) => {
       if (result.rows.length === 0) {
-        res.status(403).send('sorry!');
+        res.status(403).redirect('/login?login=fail');
         return;
       }
 
@@ -70,7 +92,7 @@ app.post('/login', (req, res) => {
       const hashedPassword = getHash(req.body.password);
 
       if (user.password !== hashedPassword) {
-        res.status(403).send('sorry!');
+        res.status(403).redirect('/login?login=fail');
         return;
       }
 
@@ -78,7 +100,7 @@ app.post('/login', (req, res) => {
 
       res.cookie('loggedIn', hashedCookieString);
       res.cookie('userId', user.id);
-      res.send('logged in!');
+      res.redirect('/dashboard');
     })
     .catch((err) => {
       console.log('Error executing query', err.stack);
@@ -89,11 +111,14 @@ app.post('/login', (req, res) => {
 app.delete('/logout', (req, res) => {
   res.clearCookie('userId');
   res.clearCookie('loggedIn');
+  res.redirect('login');
 });
+
+// ==================== DASHBOARD ====================
 
 app.get('/dashboard', checkAuth, (req, res) => {
   if (req.isLoggedIn === false) {
-    res.status(403).send('sorry!');
+    res.status(403).redirect('/');
     return;
   }
   req.body.newTrxnId = null;
@@ -115,9 +140,11 @@ app.get('/dashboard', checkAuth, (req, res) => {
       res.status(503).send('error'); });
 });
 
+// ==================== ALL TRANSACTIONS ====================
+
 app.get('/trxn', checkAuth, (req, res) => {
   if (req.isLoggedIn === false) {
-    res.status(403).send('sorry! not logged in');
+    res.status(403).redirect('/');
   }
   pool
     .query('SELECT categories.category, expenses.id, TO_CHAR(expenses.exp_date, \'YYYY-MM-DD\') AS date, expenses.exp_name, expenses.exp_amount FROM expenses LEFT JOIN categories ON expenses.exp_category = categories.id WHERE exp_user=$1 AND exp_is_deleted=$2 ORDER BY expenses.exp_date DESC', [req.cookies.userId, false])
@@ -129,9 +156,11 @@ app.get('/trxn', checkAuth, (req, res) => {
       res.status(503).send('error'); });
 });
 
+// ==================== SINGLE TRANSACTION ====================
+
 app.get('/trxn/:trxnId', checkAuth, (req, res) => {
   if (req.isLoggedIn === false) {
-    res.status(403).send('sorry! not logged in');
+    res.status(403).redirect('/');
   }
   const { from } = req.query;
   const { trxnId } = req.params;
@@ -139,6 +168,7 @@ app.get('/trxn/:trxnId', checkAuth, (req, res) => {
     .query('SELECT exp_user FROM expenses WHERE id=$1 AND exp_is_deleted=$2', [req.params.trxnId, false])
     .then((result) => {
       if (result.rows[0].exp_user.toString() !== req.cookies.userId) {
+        // TODO: REDIRECT TO DASHBOARD AND ADD ERROR MSG
         res.status(403).send('sorry! wrong user');
       }
       return pool.query('SELECT categories.category, expenses.exp_date, expenses.exp_name, expenses.exp_amount FROM expenses LEFT JOIN categories ON expenses.exp_category = categories.id WHERE expenses.id=$1 AND exp_is_deleted=$2', [req.params.trxnId, false]);
@@ -153,12 +183,13 @@ app.get('/trxn/:trxnId', checkAuth, (req, res) => {
 
 app.get('/trxn/:trxnId/edit', checkAuth, (req, res) => {
   if (req.isLoggedIn === false) {
-    res.status(403).send('sorry! not logged in');
+    res.status(403).redirect('/');
   }
   pool
     .query('SELECT exp_user FROM expenses WHERE id=$1 AND exp_is_deleted=$2', [req.params.trxnId, false])
     .then((result) => {
       if (result.rows[0].exp_user.toString() !== req.cookies.userId) {
+        // TODO: REDIRECT TO DASHBOARD AND ADD ERROR MSG
         res.status(403).send('sorry! wrong user');
       }
       return pool.query('SELECT categories.category, TO_CHAR(expenses.exp_date, \'YYYY-MM-DD\') AS date, expenses.exp_name, expenses.exp_amount FROM expenses LEFT JOIN categories ON expenses.exp_category = categories.id WHERE expenses.id=$1 AND exp_is_deleted=$2', [req.params.trxnId, false]);
@@ -181,7 +212,7 @@ app.get('/trxn/:trxnId/edit', checkAuth, (req, res) => {
 
 app.put('/trxn/:trxnId', checkAuth, (req, res) => {
   if (req.isLoggedIn === false) {
-    res.status(403).send('sorry! not logged in');
+    res.status(403).redirect('/');
   }
   const {
     category, date, name, amount,
@@ -210,9 +241,11 @@ app.delete('/trxn/:trxnId', (req, res) => {
     });
 });
 
+// ==================== NEW TRANSACTION ====================
+
 app.get('/new', checkAuth, (req, res) => {
   if (req.isLoggedIn === false) {
-    res.status(403).send('sorry!');
+    res.status(403).redirect('/');
     return;
   }
   pool
@@ -244,5 +277,7 @@ app.post('/new', (req, res) => {
       res.status(503).send('error');
     });
 });
+
+// ================================================================================
 
 app.listen(3004);
