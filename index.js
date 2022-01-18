@@ -126,14 +126,31 @@ app.get('/dashboard', checkAuth, (req, res) => {
     req.body.newTrxnId = req.query.from;
   }
   pool
-    .query('SELECT exp_amount FROM expenses WHERE exp_user=$1 AND EXTRACT(month FROM exp_date) = EXTRACT(month FROM NOW())', [req.cookies.userId])
+    .query('SELECT exp_amount AS amt, categories.category AS cat FROM expenses LEFT JOIN categories ON expenses.exp_category = categories.id WHERE exp_user=$1 AND EXTRACT(month FROM exp_date) = EXTRACT(month FROM NOW()) AND expenses.exp_is_deleted=false', [req.cookies.userId])
     .then((result) => {
-      const amtArray = result.rows.map(({ exp_amount }) => exp_amount);
+      const amtArray = result.rows.map(({ amt }) => amt);
+      const dataObj = {};
+      result.rows.forEach((trxn) => {
+        if (trxn.cat in dataObj) {
+          dataObj[trxn.cat] += Number(trxn.amt);
+        } else {
+          dataObj[trxn.cat] = Number(trxn.amt);
+        }
+      });
+      req.body.catArray = Object.keys(dataObj);
+      req.body.amtPerCatArray = Object.values(dataObj);
       req.body.totalAmt = amtArray.reduce((prev, curr) => prev + curr, 0);
       return pool.query('SELECT categories.category, expenses.id, TO_CHAR(expenses.exp_date, \'YYYY-MM-DD\') AS date, expenses.exp_name, expenses.exp_amount FROM expenses LEFT JOIN categories ON expenses.exp_category = categories.id WHERE exp_user=$1 AND exp_is_deleted=$2 ORDER BY expenses.exp_date DESC', [req.cookies.userId, false]); })
     .then((result) => {
-      const { totalAmt, newTrxnId } = req.body;
-      res.render('dashboard', { trxn: result.rows.slice(0, 5), totalAmt, newTrxnId });
+      result.rows.forEach((item) => {
+        item.exp_amount = `$${item.exp_amount.toFixed(2)}`;
+      });
+      const {
+        totalAmt, catArray, amtPerCatArray, newTrxnId,
+      } = req.body;
+      res.render('dashboard', {
+        trxn: result.rows.slice(0, 5), totalAmt, catArray, amtPerCatArray, newTrxnId,
+      });
     })
     .catch((err) => {
       console.log('Error executing query', err.stack);
@@ -149,6 +166,9 @@ app.get('/trxn', checkAuth, (req, res) => {
   pool
     .query('SELECT categories.category, expenses.id, TO_CHAR(expenses.exp_date, \'YYYY-MM-DD\') AS date, expenses.exp_name, expenses.exp_amount FROM expenses LEFT JOIN categories ON expenses.exp_category = categories.id WHERE exp_user=$1 AND exp_is_deleted=$2 ORDER BY expenses.exp_date DESC', [req.cookies.userId, false])
     .then((result) => {
+      result.rows.forEach((item) => {
+        item.exp_amount = `$${item.exp_amount.toFixed(2)}`;
+      });
       res.render('all-trxn', { trxn: result.rows });
     })
     .catch((err) => {
@@ -171,9 +191,12 @@ app.get('/trxn/:trxnId', checkAuth, (req, res) => {
         // TODO: REDIRECT TO DASHBOARD AND ADD ERROR MSG
         res.status(403).send('sorry! wrong user');
       }
-      return pool.query('SELECT categories.category, expenses.exp_date, expenses.exp_name, expenses.exp_amount FROM expenses LEFT JOIN categories ON expenses.exp_category = categories.id WHERE expenses.id=$1 AND exp_is_deleted=$2', [req.params.trxnId, false]);
+      return pool.query('SELECT categories.category, TO_CHAR(expenses.exp_date, \'YYYY-MM-DD\') AS date, expenses.exp_name, expenses.exp_amount FROM expenses LEFT JOIN categories ON expenses.exp_category = categories.id WHERE expenses.id=$1 AND exp_is_deleted=$2', [req.params.trxnId, false]);
     })
     .then((result) => {
+      result.rows.forEach((item) => {
+        item.exp_amount = `$${item.exp_amount.toFixed(2)}`;
+      });
       res.render('trxn', { details: result.rows[0], from, trxnId });
     })
     .catch((err) => {
@@ -271,6 +294,46 @@ app.post('/new', (req, res) => {
     .then((result) => {
       const recordedId = result.rows[0].id;
       res.redirect(`/dashboard?from=${recordedId}`);
+    })
+    .catch((err) => {
+      console.log('Error executing query', err.stack);
+      res.status(503).send('error');
+    });
+});
+
+// ==================== PROFILE ====================
+
+app.get('/profile', checkAuth, (req, res) => {
+  if (req.isLoggedIn === false) {
+    res.status(403).redirect('/');
+    return;
+  }
+  if (req.query.from) {
+    req.body.from = req.query.from;
+  }
+  pool
+    .query('SELECT username FROM users WHERE id=$1', [req.cookies.userId])
+    .then((result) => {
+      req.body.user = result.rows[0].username;
+      return pool.query('SELECT category FROM categories INNER JOIN users_categories ON categories.id=users_categories.uc_category WHERE users_categories.uc_user=$1', [req.cookies.userId]);
+    })
+    .then((result) => {
+      const curCats = result.rows.map(({ category }) => category);
+      const { user, from } = req.body;
+      res.render('profile', { categories: curCats, user, from });
+    })
+    .catch((err) => {
+      console.log('Error executing query', err.stack);
+      res.status(503).send('error'); });
+});
+
+app.post('/profile', (req, res) => {
+  const { category } = req.body;
+  pool
+    .query('INSERT INTO categories (category) VALUES ($1) RETURNING id', [category])
+    .then((result) => (pool.query('INSERT INTO users_categories (uc_user, uc_category) VALUES ($1, $2)', [req.cookies.userId, result.rows[0].id])))
+    .then(() => {
+      res.redirect('/profile?from=newCat');
     })
     .catch((err) => {
       console.log('Error executing query', err.stack);

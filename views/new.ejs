@@ -1,33 +1,38 @@
 <%- include('header', {title: "Add New Transaction"}); -%>
-<div class="container">
-<h1>Add New Transaction</h1>
+<%- include('navbar'); -%>
 
-<form action="/new" method="POST" class="row g-3">
-  
-  <div class="form-floating">
-    <select class="form-select" name="category" id="category">
-      <% categories.forEach((cat) => {%>
-        <option value="<%=cat%>"><%=cat%></option>
-      <%})%>
-      <option value="new">New Category</option>
-    </select>
-    <label for="category">Category</label>
-  </div>
+<h1 class="text-center display-4 fw-bold">Add New Transaction</h1>
 
-  <input type="date" class="form-control" max="<%=date%>" name="date" id="date">
+<div class="container" style="max-width:540px">
+  <form action="/new" method="POST" class="row g-3">
+    
+    <div class="form-floating">
+      <select class="form-select" name="category" id="category" required>
+        <% categories.forEach((cat) => {%>
+          <option value="<%=cat%>"><%=cat%></option>
+        <%})%>
+      </select>
+      <label for="category">Category</label>
+    </div>
 
-  <div class="form-floating">
-    <input type="text" class="form-control" name="name" id="name">
-    <label for="name">Description</label>
-  </div>
-  
-  <div class="input-group">
-    <span class="input-group-text">$</span>
-    <input type="number" step="0.01" class="form-control" name="amount" id="amount">
-  </div>
+    <div class="form-floating">
+      <input type="date" class="form-control" max="<%=date%>" name="date" id="date" required>
+      <label for="date">Date</label>
+    </div>
 
-  <input class="btn btn-primary" type="submit" value="Submit" />
+    <div class="form-floating">
+      <input type="text" class="form-control" name="name" id="name" required>
+      <label for="name">Description</label>
+    </div>
+    
+    <div class="input-group">
+      <span class="input-group-text">$</span>
+      <input type="number" step="0.01" class="form-control" name="amount" id="amount" required>
+    </div>
 
-</form>
+    <input class="btn btn-primary" type="submit" value="Submit" />
+
+  </form>
+</div>
   
 <%- include('footer'); -%>

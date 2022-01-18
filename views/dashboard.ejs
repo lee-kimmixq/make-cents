@@ -1,11 +1,14 @@
-<%- include('header', {title: "Home"}); -%>
+<%- include('header', {title: "Dashboard"}); -%>
+<%- include('navbar'); -%>
 
+<% let topDist = 34 %>
 <%if (newTrxnId) {%>
   <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
     <symbol id="check-circle-fill" fill="currentColor" viewBox="0 0 16 16">
       <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
     </symbol>
   </svg>
+  <% topDist = 40 %>
   <%if (newTrxnId === 'delete') {%>
     <div class="alert alert-warning d-flex align-items-center" role="alert">
       <svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img" aria-label="Success:"><use xlink:href="#check-circle-fill"/></svg>
@@ -19,40 +22,89 @@
   <%}%>   
 <%}%>
 
-<h1>Total Expenses (this month): $<%=totalAmt%></h1>
+<div style="width: 50%; position: absolute; top: <%=topDist%>%; left: 25%">
+  <h1 class="text-center display-4 fw-bold">$<%=totalAmt%></h1>
+</div>
 
-<table class="table table-hover table-borderless">
-  <thead>
-    <tr>
-      <th scope="col">Date</th>
-      <th scope="col">Name</th>
-      <th scope="col">Amount</th>
-      <th scope="col">Actions</th>
-    </tr>
-  </thead>
-  <tbody>
-    <%trxn.forEach((item) => { %>
+<h2 class="text-center lead text-muted" style="margin-top: 20px;"> THIS MONTH'S EXPENDITURE </h2>
+<div class="container chart-container" style="max-width:540px">
+  <canvas id="myChart" width="400" height="400"></canvas>
+  <script>
+    const labelsArray = [];
+    <% catArray.forEach((cat) => { %>
+      labelsArray.push('<%=cat%>')
+    <% }) %>
+    const dataArray = [];
+    <% amtPerCatArray.forEach((amt) => { %>
+      dataArray.push(<%=amt%>)
+    <% }) %>
+    const ctx = document.getElementById('myChart').getContext('2d');
+    const myChart = new Chart(ctx, {
+      type: 'doughnut',
+    data: {
+      labels: labelsArray,
+      datasets: [{
+        label: "",
+        data: dataArray,
+        backgroundColor: [
+          'rgb(255, 99, 132)',
+          'rgb(54, 162, 235)',
+          'rgb(255, 205, 86)'
+        ],
+      hoverOffset: 4
+    }]
+    },
+    options: {
+      plugins: {
+        legend: {
+          display: false
+        }
+      },
+      scales: {
+        grid: {
+          display: false
+        },
+      }
+    }
+  });
+  </script>
+</div>
 
-        <tr>
-          <td><%=item.date%></td>
-          <td>
-            <%=item.exp_name%>
-            <span class="badge bg-secondary"><%=item.category%></span>
-          </td>
-          <td><%=item.exp_amount%></td>
-          <td>
-            <a class="btn btn-primary btn-sm" href="/trxn/<%=item.id%>">View</a>
-            <a class="btn btn-primary btn-sm" type="button" href="/trxn/<%=item.id%>/edit">Edit</a>
-            <form action="?_method=DELETE" method="POST">
-              <input type="submit" class="btn btn-danger btn-sm" value="Delete" />
-            </form>
-          </td>
-        </tr>
-    <%})%>
-  </tbody>
-</table>
+<div class="container" style="max-width:720px">
+  <h2 class="text-center lead text-muted" style="margin-top: 20px;"> LAST 5 TRANSACTIONS </h2>
+  <table class="table table-hover table-borderless">
+    <thead>
+      <tr>
+        <th scope="col">Date</th>
+        <th scope="col">Name</th>
+        <th scope="col">Amount</th>
+        <th scope="col">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <%trxn.forEach((item) => { %>
 
-<div class="d-grid gap-2">
+          <tr>
+            <td><%=item.date%></td>
+            <td>
+              <%=item.exp_name%>
+              <span class="badge bg-secondary"><%=item.category%></span>
+            </td>
+            <td><%=item.exp_amount%></td>
+            <td>
+              <form action="/trxn/<%=item.id%>?_method=DELETE" method="POST">
+                <a class="btn btn-outline-primary btn-sm" href="/trxn/<%=item.id%>">View</a>
+                <a class="btn btn-outline-secondary btn-sm" type="button" href="/trxn/<%=item.id%>/edit">Edit</a>
+                <input type="submit" class="btn btn-outline-danger btn-sm" value="Delete" />
+              </form>
+            </td>
+          </tr>
+      <%})%>
+    </tbody>
+  </table>
+</div>
+
+<div class="container d-grid gap-2" style="max-width:540px">
   <a class="btn btn-outline-primary" type="button" href="/trxn">View All Transactions</a>
   <a class="btn btn-primary" type="button" href="/new">Add New Transaction</a>
 </div>

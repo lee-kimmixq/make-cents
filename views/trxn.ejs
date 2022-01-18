@@ -1,4 +1,5 @@
-<%- include('header', {title: "Add New Transaction"}); -%>
+<%- include('header', {title: "Transaction"}); -%>
+<%- include('navbar'); -%>
 
 <%if (from) {%>
   <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
@@ -13,19 +14,37 @@
   </div>
 <%}%>
 
-<h1>
-  <%=details.category%><br>
-  <%=details.exp_date%><br>
-  <%=details.exp_name%><br>
-  <%=details.exp_amount%>
-</h1>
+<h1 class="text-center display-4 fw-bold">My Transaction</h1>
 
-<div class="d-grid gap-2">
-  <a class="btn btn-primary" type="button" href="/trxn/<%=trxnId%>/edit">Edit Transaction</a>
+<div class="container text-center" style="max-width:360px; font-size:large;">
+  <table class="table table-borderless">
+    <tbody>
+      <tr>
+        <th scope="row">Date:</th>
+        <td><%=details.date%></td>
+      </tr>
+      <tr>
+        <th scope="row">Category:</th>
+        <td><%=details.category%></td>
+      </tr>
+      <tr>
+        <th scope="row">Name:</th>
+        <td><%=details.exp_name%></td>
+      </tr>
+      <tr>
+        <th scope="row">Amount:</th>
+        <td><%=details.exp_amount%></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="container d-grid gap-2" style="max-width:540px">
+  <a class="btn btn-outline-primary" type="button" href="/trxn/<%=trxnId%>/edit">Edit Transaction</a>
   <form action="?_method=DELETE" method="POST">
-    <input type="submit" class="btn btn-danger" value="Delete Transaction" />
+    <input type="submit" class="btn btn-outline-danger" style="width: 540px;" value="Delete Transaction" />
   </form>
-  <a class="btn btn-secondary" type="button" href="/dashboard">Back to Dashboard</a>
+  <a class="btn btn-outline-secondary" type="button" href="/dashboard">Back to Dashboard</a>
 </div>
   
 <%- include('footer'); -%>
