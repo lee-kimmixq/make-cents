@@ -22,6 +22,8 @@ const pgConnectionConfigs = {
 
 const pool = new Pool(pgConnectionConfigs);
 
+const PORT = process.env.PORT || 3004;
+
 // ==================== MIDDLEWARE ====================
 
 const checkAuth = (req, res, next) => {
@@ -301,6 +303,16 @@ app.post('/new', (req, res) => {
     });
 });
 
+// ==================== WEEKLY/MONTHLY BREAKDOWN ====================
+
+app.get('/breakdown', checkAuth, (req, res) => {
+  if (req.isLoggedIn === false) {
+    res.status(403).redirect('/');
+    return;
+  }
+  res.render('breakdown');
+});
+
 // ==================== PROFILE ====================
 
 app.get('/profile', checkAuth, (req, res) => {
@@ -343,4 +355,4 @@ app.post('/profile', (req, res) => {
 
 // ================================================================================
 
-app.listen(3004);
+app.listen(PORT);

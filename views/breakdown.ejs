@@ -1,0 +1,17 @@
+<%- include('header', {title: "Dashboard"}); -%>
+<%- include('navbar'); -%>
+
+<h1 class="text-center display-4 fw-bold">Your Spending Habits</h1>
+
+<h2 class="text-center lead text-muted" style="margin-top: 20px;"> WEEKLY </h2>
+
+<div class="container chart-container" style="max-width:540px">
+  <canvas id="weeklyChart" width="400" height="400"></canvas>
+</div>
+
+<h2 class="text-center lead text-muted" style="margin-top: 20px;"> MONTHLY </h2>
+<div class="container chart-container" style="max-width:540px">
+  <canvas id="monthlyChart" width="400" height="400"></canvas>
+</div>
+
+<%- include('footer'); -%>
