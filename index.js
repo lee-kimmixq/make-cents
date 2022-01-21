@@ -13,12 +13,24 @@ app.use(express.static('public'));
 app.use(cookieParser());
 
 const { Pool } = pg;
-const pgConnectionConfigs = {
-  user: 'kimmilee',
-  host: 'localhost',
-  database: 'makecents',
-  port: 5432,
-};
+
+let pgConnectionConfigs;
+
+if (process.env.DATABASE_URL) {
+  pgConnectionConfigs = {
+    connectionString: process.env.DATABASE_URL,
+    ssl: {
+      rejectUnauthorized: false,
+    },
+  };
+} else {
+  pgConnectionConfigs = {
+    user: 'kimmilee',
+    host: 'localhost',
+    database: 'makecents',
+    port: 5432,
+  };
+}
 
 const pool = new Pool(pgConnectionConfigs);
 
