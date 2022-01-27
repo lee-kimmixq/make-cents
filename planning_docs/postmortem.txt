@@ -1,0 +1,28 @@
+[TECHNICAL REVIEW]
+
+1. What went well? 
+- Use of bootstrap elements (alerts, modals) (eg. profile.ejs)
+
+2. What were the biggest challenges you faced? 
+- Chart.js
+- Floating points
+
+3. What would you do differently next time? 
+- More refactoring of code
+- Formatting of error pages
+
+----------------------------------------------------------------
+
+[PROCESS REVIEW]
+
+1. What went well? 
+- Was able to query what I needed from the database
+
+2. What could have been better?
+- Could have committed more often
+- Better time management
+- Develop more complete features
+
+3. What would you do differently next time?
+- Spend more time on the project :) 
+- Develop skeleton framework and plan more before starting
